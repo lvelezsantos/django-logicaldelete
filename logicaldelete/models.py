@@ -23,7 +23,7 @@ class LogicalModel(models.Model):
     
     def delete(self):
         self.date_removed = datetime.datetime.now()
-        self.save()
-    
+    delete.alters_data = True
+
     class Meta:
         abstract = True

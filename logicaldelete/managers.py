@@ -19,7 +19,7 @@ class LogicalDeletedManager(models.Manager):
     def all_with_deleted(self):
         if self.model:
             return super(LogicalDeletedManager, self).get_query_set()
-    
+
     def only_deleted(self):
         if self.model:
             return super(LogicalDeletedManager, self).get_query_set().filter(
@@ -27,6 +27,9 @@ class LogicalDeletedManager(models.Manager):
             )
     
     def get(self, *args, **kwargs):
+        return self.get_query_set().get(*args, **kwargs)
+
+    def get_with_deleted(self, *args, **kwargs):
         return self.all_with_deleted().get(*args, **kwargs)
     
     def filter(self, *args, **kwargs):
