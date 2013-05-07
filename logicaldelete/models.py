@@ -1,7 +1,8 @@
 import datetime
 
-from django.db import models
+from django.db import models, router
 
+from logicaldelete.deletion import LogicalDeleteCollector
 from logicaldelete import managers
 
 
@@ -20,9 +21,16 @@ class LogicalModel(models.Model):
     def active(self):
         return self.date_removed is None
     active.boolean = True
+    active.short_description = 'Activo'
     
-    def delete(self):
-        self.date_removed = datetime.datetime.now()
+    def delete(self, using=None):
+        using = using or router.db_for_write(self.__class__, instance=self)
+        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+
+        collector = LogicalDeleteCollector(using=using)
+        collector.collect([self])
+        collector.delete()
+
     delete.alters_data = True
 
     class Meta:
