@@ -49,6 +49,11 @@ class LogicalModelAdmin(admin.ModelAdmin):
         else:
             self.list_filter = (ActiveListFilter, )
 
+        if self.exclude:
+            self.exclude += ('date_created', 'date_modified', 'date_removed')
+        else:
+            self.exclude = ('date_created', 'date_modified', 'date_removed')
+
     def get_actions(self, request):
         actions = super(LogicalModelAdmin, self).get_actions(request)
 
