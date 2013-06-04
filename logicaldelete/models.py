@@ -42,7 +42,7 @@ class LogicalModel(models.Model):
         collector.collect([self])
         collector.delete()
 
-    delete.alters_data = True
+    delete_complete.alters_data = True
 
     class Meta:
         abstract = True
