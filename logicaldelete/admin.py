@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_lazy
 from datetime import datetime
 
 class ActiveListFilter(SimpleListFilter):
-    title = 'Activo'
-    parameter_name = 'activo'
+    title = 'Borrados'
+    parameter_name = 'borrado'
 
     def lookups(self, request, model_admin):
         return (
@@ -19,9 +19,9 @@ class ActiveListFilter(SimpleListFilter):
         provided in the query string and retrievable via
         `self.value()`.
         """
-        if self.value() == '1':
-            return queryset.filter(date_removed__isnull=True)
         if self.value() == '0':
+            return queryset.filter(date_removed__isnull=True)
+        if self.value() == '1':
             return queryset.filter(date_removed__isnull=False)
 
         return queryset.filter(date_removed__isnull=True)
@@ -38,11 +38,6 @@ class LogicalModelAdmin(admin.ModelAdmin):
 
     def __init__(self, *args, **kwargs):
         super(LogicalModelAdmin, self).__init__(*args, **kwargs)
-        if self.list_display:
-            self.list_display += ('active', )
-        else:
-            pass
-            #self.list_display = ('active')
 
         if self.list_filter:
             self.list_filter += (ActiveListFilter, )
