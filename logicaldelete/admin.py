@@ -83,12 +83,82 @@ class LogicalModelAdmin(admin.ModelAdmin):
         return qs
 
     def undelete_selected(self, request, queryset):
+        """ Restaura un elemento y todos sus elementos hijos
+
+        """
         count = queryset.count()
         if count == 0:
             messages.error(request, "No se hay objetos para restaurar")
             return None
 
-        queryset.update(date_removed=None)
+        #queryset.update(date_removed=None)
+
+        opts = self.model._meta
+        app_label = opts.app_label
+
+        # Check that the user has delete permission for the actual model
+        #if not self.has_delete_permission(request):
+        #    raise PermissionDenied
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+        if not request.user.is_staff:
+            return PermissionDenied
+
+        using = router.db_for_write(self.model)
+
+        # Populate deletable_objects, a data structure of all related objects that
+        # will also be deleted.
+        deletable_objects, perms_needed, protected = get_deleted_objects(
+            queryset, opts, request.user, self.admin_site, using)
+
+        # The user has already confirmed the deletion.
+        # Do the deletion and return a None to display the change list view again.
+        if request.POST.get('post'):
+
+            #if perms_needed:
+            #    raise PermissionDenied
+
+            n = queryset.count()
+            if n:
+                for obj in queryset:
+                    obj_display = force_unicode(obj)
+                    self.log_deletion(request, obj, obj_display)
+                queryset.undelete()
+                self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
+                    "count": n, "items": model_ngettext(self.opts, n)
+                })
+            # Return None to display the change list page again.
+            return None
+
+        if len(queryset) == 1:
+            objects_name = force_unicode(opts.verbose_name)
+        else:
+            objects_name = force_unicode(opts.verbose_name_plural)
+
+        if perms_needed or protected:
+            title = _("Cannot delete %(name)s") % {"name": objects_name}
+        else:
+            title = _("Are you sure?")
+
+        context = {
+            "title": title,
+            "objects_name": objects_name,
+            "deletable_objects": [deletable_objects],
+            'queryset': queryset,
+            "perms_lacking": perms_needed,
+            "protected": protected,
+            "opts": opts,
+            "app_label": app_label,
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+        }
+
+        # Display the confirmation page
+        return TemplateResponse(request, self.delete_selected_complete_confirmation or [
+            "admin/%s/%s/undelete_selected_confirmation.html" % (app_label, opts.object_name.lower()),
+            "admin/%s/undelete_selected_confirmation.html" % app_label,
+            "admin/undelete_selected_confirmation.html"
+        ], context, current_app=self.admin_site.name)
     undelete_selected.short_description = ugettext_lazy("Restaurar  %(verbose_name_plural)s seleccionado/s")
 
 
