@@ -123,9 +123,9 @@ class LogicalModelAdmin(admin.ModelAdmin):
             if n:
                 for obj in queryset:
                     obj_display = force_unicode(obj)
-                    self.log_deletion(request, obj, obj_display)
+                    self.log_change(request, obj, u'se ha restaurado {0}'.format(obj_display))
                 queryset.undelete()
-                self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
+                self.message_user(request, _("se han restaurado con exito %(count)d %(items)s.") % {
                     "count": n, "items": model_ngettext(self.opts, n)
                 })
             # Return None to display the change list page again.
