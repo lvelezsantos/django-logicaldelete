@@ -23,7 +23,11 @@ Installing django-logicaldelete
 
 ::
 
-    pip install django-logicaldelete
+    git clone https://github.com/lvelezsantos/django-logicaldelete.git
+
+    cd django-logicaldelete
+
+    python setup.py install
 
 
 Using django-logicaldelete
@@ -43,12 +47,6 @@ Additional
 Logical deletes are handled by date stamping a `date_removed` column.  In addition, a `date_created` and `date_modified` columns will be populated as a convenience.
 
 
-Backwards Incompatible Changes
-------------------------------
+Features
+---------
 
-1.1
-***
-
-* Changed `everything` to `all_with_deleted` on LogicalDeleteManager
-* LogicalDeleteManager moved from `logicaldelete.models` to `logicaldelete.managers`
-* Removed `deleted` and `everything` querysets from `logicaldelete.models.Model`

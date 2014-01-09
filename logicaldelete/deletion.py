@@ -2,7 +2,7 @@
 from operator import attrgetter
 
 from django.utils.timezone import now
-from django.db.models.deletion import Collector, force_managed, sql, signals
+from django.db.models.deletion import Collector, sql, signals
 from django.db.models.deletion import ProtectedError
 
 
@@ -23,7 +23,6 @@ class LogicalDeleteOptions(object):
 
 class LogicalDeleteCollector(Collector):
 
-    @force_managed
     def delete(self):
 
         # sort instance collections
@@ -89,7 +88,6 @@ class LogicalDeleteCollector(Collector):
             for instance in instances:
                 setattr(instance, model._meta.pk.attname, None)
 
-    @force_managed
     def undelete(self):
 
         # sort instance collections
