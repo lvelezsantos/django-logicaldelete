@@ -20,12 +20,12 @@ class LogicalDeleteOptions(object):
         if opts:
             for key, value in opts.__dict__.iteritems():
                 setattr(self, key, value)
-
+from django.db import connections, transaction, IntegrityError
+from django.utils import six
 class LogicalDeleteCollector(Collector):
 
     def delete(self):
 
-        # sort instance collections
         for model, instances in self.data.items():
             self.data[model] = sorted(instances, key=attrgetter("pk"))
 
@@ -34,63 +34,56 @@ class LogicalDeleteCollector(Collector):
         # end of a transaction.
         self.sort()
 
-        # send pre_delete signals
-        for model, obj in self.instances_with_model():
-            if not model._meta.auto_created:
-                signals.pre_delete.send(
-                    sender=model, instance=obj, using=self.using
-                )
+        with transaction.commit_on_success_unless_managed(using=self.using):
 
-        # update fields
-        for model, instances_for_fieldvalues in self.field_updates.iteritems():
-            query = sql.UpdateQuery(model)
-            for (field, value), instances in instances_for_fieldvalues.iteritems():
-                query.update_batch([obj.pk for obj in instances],
-                                   {field.name: value}, self.using)
+            date_removed = now()
 
-        # reverse instance collections
-        for instances in self.data.itervalues():
-            instances.reverse()
+            # send pre_delete signals
+            for model, obj in self.instances_with_model():
+                if not model._meta.auto_created:
+                    signals.pre_delete.send(
+                        sender=model, instance=obj, using=self.using
+                    )
 
-        date_removed = now()
+            # fast deletes
+            for qs in self.fast_deletes:
+                qs.update(date_removed=date_removed)
 
-        # delete batches
-        for model, batches in self.batches.iteritems():
-            print 'batches'
+            # update fields
+            for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
+                query = sql.UpdateQuery(model)
+                for (field, value), instances in six.iteritems(instances_for_fieldvalues):
+                    query.update_batch([obj.pk for obj in instances],
+                                       {field.name: value}, self.using)
 
-            query = sql.DeleteQuery(model)
+            # reverse instance collections
+            for instances in six.itervalues(self.data):
+                instances.reverse()
 
-            for field, instances in batches.iteritems():
-                query.delete_batch([obj.pk for obj in instances], self.using, field)
-                #query.update_batch([obj.pk for obj in instances], {'date_removed': date_removed},self.using, field)
+            # delete instances
+            for model, instances in six.iteritems(self.data):
+                query = sql.UpdateQuery(model)
+                pk_list = [obj.pk for obj in instances]
+                query.update_batch(pk_list, {'date_removed': date_removed}, self.using)
 
-        # delete instances
-        for model, instances in self.data.iteritems():
-            query = sql.UpdateQuery(model)
-            pk_list = [obj.pk for obj in instances]
-            query.update_batch(pk_list,
-                            {'date_removed': date_removed}, self.using)
-            #query.delete_batch(pk_list, self.using)
-
-        # send post_delete signals
-        for model, obj in self.instances_with_model():
-            if not model._meta.auto_created:
-                signals.post_delete.send(
-                    sender=model, instance=obj, using=self.using
-                )
+                if not model._meta.auto_created:
+                    for obj in instances:
+                        signals.post_delete.send(
+                            sender=model, instance=obj, using=self.using
+                        )
 
         # update collected instances
-        for model, instances_for_fieldvalues in self.field_updates.iteritems():
-            for (field, value), instances in instances_for_fieldvalues.iteritems():
+        for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
+            for (field, value), instances in six.iteritems(instances_for_fieldvalues):
                 for obj in instances:
                     setattr(obj, field.attname, value)
-        for model, instances in self.data.iteritems():
+        for model, instances in six.iteritems(self.data):
             for instance in instances:
                 setattr(instance, model._meta.pk.attname, None)
 
+
     def undelete(self):
 
-        # sort instance collections
         for model, instances in self.data.items():
             self.data[model] = sorted(instances, key=attrgetter("pk"))
 
@@ -99,56 +92,49 @@ class LogicalDeleteCollector(Collector):
         # end of a transaction.
         self.sort()
 
-        # send pre_delete signals
-        for model, obj in self.instances_with_model():
-            if not model._meta.auto_created:
-                signals.pre_delete.send(
-                    sender=model, instance=obj, using=self.using
-                )
+        with transaction.commit_on_success_unless_managed(using=self.using):
 
-        # update fields
-        for model, instances_for_fieldvalues in self.field_updates.iteritems():
-            query = sql.UpdateQuery(model)
-            for (field, value), instances in instances_for_fieldvalues.iteritems():
-                query.update_batch([obj.pk for obj in instances],
-                                   {field.name: value}, self.using)
+            date_removed = None
 
-        # reverse instance collections
-        for instances in self.data.itervalues():
-            instances.reverse()
+            # send pre_delete signals
+            for model, obj in self.instances_with_model():
+                if not model._meta.auto_created:
+                    signals.pre_delete.send(
+                        sender=model, instance=obj, using=self.using
+                    )
 
-        #date_removed = now()
+            # fast deletes
+            for qs in self.fast_deletes:
+                qs.update(date_removed=date_removed)
 
-        # delete batches
-        for model, batches in self.batches.iteritems():
+            # update fields
+            for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
+                query = sql.UpdateQuery(model)
+                for (field, value), instances in six.iteritems(instances_for_fieldvalues):
+                    query.update_batch([obj.pk for obj in instances],
+                                       {field.name: value}, self.using)
 
+            # reverse instance collections
+            for instances in six.itervalues(self.data):
+                instances.reverse()
 
-            query = sql.UpdateQuery(model)
+            # delete instances
+            for model, instances in six.iteritems(self.data):
+                query = sql.UpdateQuery(model)
+                pk_list = [obj.pk for obj in instances]
+                query.update_batch(pk_list, {'date_removed': date_removed}, self.using)
 
-            for field, instances in batches.iteritems():
-                #query.delete_batch([obj.pk for obj in instances], self.using, field)
-                query.update_batch([obj.pk for obj in instances], {'date_removed': None}, self.using)
-
-        # delete instances
-        for model, instances in self.data.iteritems():
-            query = sql.UpdateQuery(model)
-            pk_list = [obj.pk for obj in instances]
-            query.update_batch(pk_list,
-                            {'date_removed': None}, self.using)
-            #query.delete_batch(pk_list, self.using)
-
-        # send post_delete signals
-        #for model, obj in self.instances_with_model():
-        #    if not model._meta.auto_created:
-        #        signals.post_delete.send(
-        #            sender=model, instance=obj, using=self.using
-        #        )
+                if not model._meta.auto_created:
+                    for obj in instances:
+                        signals.post_delete.send(
+                            sender=model, instance=obj, using=self.using
+                        )
 
         # update collected instances
-        for model, instances_for_fieldvalues in self.field_updates.iteritems():
-            for (field, value), instances in instances_for_fieldvalues.iteritems():
+        for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
+            for (field, value), instances in six.iteritems(instances_for_fieldvalues):
                 for obj in instances:
                     setattr(obj, field.attname, value)
-        for model, instances in self.data.iteritems():
+        for model, instances in six.iteritems(self.data):
             for instance in instances:
                 setattr(instance, model._meta.pk.attname, None)

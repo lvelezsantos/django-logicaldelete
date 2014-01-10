@@ -88,7 +88,7 @@ class LogicalModelAdmin(admin.ModelAdmin):
         """
         count = queryset.count()
         if count == 0:
-            messages.error(request, "No se hay objetos para restaurar")
+            messages.error(request, "No hay objetos para restaurar")
             return None
 
         #queryset.update(date_removed=None)

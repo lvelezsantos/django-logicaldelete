@@ -22,7 +22,7 @@ class LogicalDeleteQuerySet(QuerySet):
         # Disable non-supported fields.
         del_query.query.select_for_update = False
         del_query.query.select_related = False
-        del_query.query.clear_ordering()
+        del_query.query.clear_ordering(force_empty=True)
 
         collector = LogicalDeleteCollector(using=del_query.db)
         collector.collect(del_query)
@@ -50,7 +50,7 @@ class LogicalDeleteQuerySet(QuerySet):
         # Disable non-supported fields.
         del_query.query.select_for_update = False
         del_query.query.select_related = False
-        del_query.query.clear_ordering()
+        del_query.query.clear_ordering(force_empty=True)
 
         collector = Collector(using=del_query.db)
         collector.collect(del_query)
@@ -65,7 +65,6 @@ class LogicalDeleteQuerySet(QuerySet):
         Deletes the records in the current QuerySet.
         """
         QuerySet.delete(self)
-
 
     def undelete(self):
         """
@@ -84,7 +83,7 @@ class LogicalDeleteQuerySet(QuerySet):
         # Disable non-supported fields.
         del_query.query.select_for_update = False
         del_query.query.select_related = False
-        del_query.query.clear_ordering()
+        del_query.query.clear_ordering(force_empty=True)
 
         collector = LogicalDeleteCollector(using=del_query.db)
         collector.collect(del_query)
@@ -92,7 +91,6 @@ class LogicalDeleteQuerySet(QuerySet):
 
         # Clear the result cache, in case this QuerySet gets reused.
         self._result_cache = None
-
 
     remove.alters_data = True
 
