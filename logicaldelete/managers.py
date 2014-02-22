@@ -26,6 +26,9 @@ class LogicalDeletedManager(models.Manager):
     def get(self, *args, **kwargs):
         return self.everything().get(*args, **kwargs)
 
+    def get_or_create(self, **kwargs):
+        return self.everything().get_or_create(**kwargs)
+
     def get_with_deleted(self, *args, **kwargs):
         return self.everything().get(*args, **kwargs)
     

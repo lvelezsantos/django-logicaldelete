@@ -1,5 +1,7 @@
+# coding=utf-8
 from django.db.models.deletion import Collector
 from django.db.models.query import QuerySet
+
 from logicaldelete.deletion import LogicalDeleteCollector
 
 
@@ -93,4 +95,3 @@ class LogicalDeleteQuerySet(QuerySet):
         self._result_cache = None
 
     remove.alters_data = True
-
