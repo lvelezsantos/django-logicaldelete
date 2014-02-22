@@ -2,6 +2,7 @@ import datetime
 
 from django.db import models, router
 from django.db.models.deletion import Collector
+from django.utils import timezone
 
 from logicaldelete.deletion import LogicalDeleteCollector
 from logicaldelete import managers
@@ -53,6 +54,19 @@ class LogicalModel(models.Model):
         collector.undelete()
 
     undelete.alters_data = True
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.date_modified = timezone.now()
+
+        if update_fields is not None:
+            if isinstance(update_fields, tuple):
+                update_fields += ('date_modified', )
+
+            elif isinstance(update_fields, list):
+                update_fields.append('date_modified')
+
+        super(LogicalModel, self).save(force_insert, force_update, using, update_fields)
 
     class Meta:
         abstract = True
