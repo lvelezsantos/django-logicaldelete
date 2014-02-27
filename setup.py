@@ -1,10 +1,8 @@
 from setuptools import setup
 
-VERSION = __import__("logicaldelete").__version__
-
 setup(
     name="django-logicaldelete",
-    version=VERSION,
+    version='2',
     author="Luis Velez",
     author_email="lvelezsantos@gmail.com",
     url="https://github.com/lvelezsantos/django-logicaldelete",

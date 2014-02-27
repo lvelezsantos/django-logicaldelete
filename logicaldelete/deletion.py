@@ -1,10 +1,12 @@
 # -*- coding: utf-8; -*-
+
 from operator import attrgetter
 
-from django.utils.timezone import now
+from django.db.models.fields import FieldDoesNotExist
+from django.db import transaction
 from django.db.models.deletion import Collector, sql, signals
-from django.db.models.deletion import ProtectedError
-
+from django.utils.timezone import now
+from django.utils import six
 
 
 class LogicalDeleteOptions(object):
@@ -20,8 +22,8 @@ class LogicalDeleteOptions(object):
         if opts:
             for key, value in opts.__dict__.iteritems():
                 setattr(self, key, value)
-from django.db import connections, transaction, IntegrityError
-from django.utils import six
+
+
 class LogicalDeleteCollector(Collector):
 
     def delete(self):
@@ -47,7 +49,12 @@ class LogicalDeleteCollector(Collector):
 
             # fast deletes
             for qs in self.fast_deletes:
-                qs.update(date_removed=date_removed)
+                # We avoid to send an error when I try to update tables in many to many relationships
+                try:
+                    qs.update(date_removed=date_removed)
+
+                except FieldDoesNotExist:
+                    pass
 
             # update fields
             for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
@@ -80,7 +87,6 @@ class LogicalDeleteCollector(Collector):
         for model, instances in six.iteritems(self.data):
             for instance in instances:
                 setattr(instance, model._meta.pk.attname, None)
-
 
     def undelete(self):
 
@@ -138,3 +144,6 @@ class LogicalDeleteCollector(Collector):
         for model, instances in six.iteritems(self.data):
             for instance in instances:
                 setattr(instance, model._meta.pk.attname, None)
+
+    def recover(self):
+        self.undelete()

@@ -11,16 +11,15 @@ from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
 
 
-
 class ActiveListFilter(SimpleListFilter):
-    title = 'Borrados'
-    parameter_name = 'borrado'
+    title = _('Borrados')
+    parameter_name = 'delete'
 
     def lookups(self, request, model_admin):
         return (
-            ('1', 'Si'),
-            ('0', 'No')
-            )
+            ('1', _('Yes')),
+            ('0', _('No')),
+        )
 
     def queryset(self, request, queryset):
         """
@@ -30,6 +29,7 @@ class ActiveListFilter(SimpleListFilter):
         """
         if self.value() == '0':
             return queryset.filter(date_removed__isnull=True)
+
         if self.value() == '1':
             return queryset.filter(date_removed__isnull=False)
 
@@ -42,9 +42,6 @@ class LogicalModelAdmin(admin.ModelAdmin):
     objects.
     """
     
-    #list_display = ("id", "active")
-    #list_display_filter = ("active",)
-
     delete_selected_complete_confirmation = None
 
     def __init__(self, *args, **kwargs):
@@ -72,7 +69,6 @@ class LogicalModelAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             actions.update({'delete_complete': self.get_action('delete_complete')})
 
-
         return actions
 
     def get_queryset(self, request):
@@ -83,19 +79,22 @@ class LogicalModelAdmin(admin.ModelAdmin):
         return qs
 
     def undelete_selected(self, request, queryset):
-        """ Restaura un elemento y todos sus elementos hijos
+        """
+        Restores an element and all its child elements
 
+        :type request: object
+        :param request:
+        :param queryset:
         """
         count = queryset.count()
         if count == 0:
-            messages.error(request, "No hay objetos para restaurar")
+            messages.error(request, _("No items to restore"))
             return None
-
-        #queryset.update(date_removed=None)
 
         opts = self.model._meta
         app_label = opts.app_label
 
+        # TODO: Check user has undelete permission for the actual model
         # Check that the user has delete permission for the actual model
         #if not self.has_delete_permission(request):
         #    raise PermissionDenied
@@ -160,8 +159,6 @@ class LogicalModelAdmin(admin.ModelAdmin):
             "admin/undelete_selected_confirmation.html"
         ], context, current_app=self.admin_site.name)
     undelete_selected.short_description = ugettext_lazy("Restaurar  %(verbose_name_plural)s seleccionado/s")
-
-
 
     def delete_complete(self, request, queryset):
         """

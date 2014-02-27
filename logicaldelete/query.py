@@ -39,8 +39,7 @@ class LogicalDeleteQuerySet(QuerySet):
         """
         Deletes the records in the current QuerySet.
         """
-        assert self.query.can_filter(), \
-                "Cannot use 'limit' or 'offset' with delete."
+        assert self.query.can_filter(), "Cannot use 'limit' or 'offset' with delete."
 
         del_query = self._clone()
 
@@ -62,18 +61,11 @@ class LogicalDeleteQuerySet(QuerySet):
         self._result_cache = None
     delete_complete.alters_data = True
 
-    def remove(self):
-        """
-        Deletes the records in the current QuerySet.
-        """
-        QuerySet.delete(self)
-
     def undelete(self):
         """
-        Mark as deleted the records in the current QuerySet.
+        Mark as undeleted the records in the current QuerySet.
         """
-        assert self.query.can_filter(),\
-        "Cannot use 'limit' or 'offset' with delete."
+        assert self.query.can_filter(), "Cannot use 'limit' or 'offset' with undelete."
 
         del_query = self._clone()
 
@@ -94,4 +86,4 @@ class LogicalDeleteQuerySet(QuerySet):
         # Clear the result cache, in case this QuerySet gets reused.
         self._result_cache = None
 
-    remove.alters_data = True
+    undelete.alters_data = True

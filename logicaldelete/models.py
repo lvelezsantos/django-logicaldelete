@@ -19,7 +19,8 @@ class LogicalModel(models.Model):
     date_removed = models.DateTimeField(null=True, blank=True)
     
     objects = managers.LogicalDeletedManager()
-    
+    #TODO: Create undelete permissions to all models
+
     def active(self):
         return self.date_removed is None
     active.boolean = True
@@ -47,7 +48,7 @@ class LogicalModel(models.Model):
 
     def undelete(self, using=None):
         using = using or router.db_for_write(self.__class__, instance=self)
-        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+        assert self._get_pk_val() is not None, "%s object can't be undeleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
 
         collector = LogicalDeleteCollector(using=using)
         collector.collect([self])
