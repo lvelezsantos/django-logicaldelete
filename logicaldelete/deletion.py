@@ -111,7 +111,10 @@ class LogicalDeleteCollector(Collector):
 
             # fast deletes
             for qs in self.fast_deletes:
-                qs.update(date_removed=date_removed)
+                try:
+                    qs.update(date_removed=date_removed)
+                except FieldDoesNotExist:
+                    pass
 
             # update fields
             for model, instances_for_fieldvalues in six.iteritems(self.field_updates):
