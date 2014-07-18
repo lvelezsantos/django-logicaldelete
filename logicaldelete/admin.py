@@ -9,6 +9,7 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy
 from django.utils.translation import ugettext as _
+from logicaldelete.forms import LogicalModelForm
 
 
 class ActiveListFilter(SimpleListFilter):
@@ -43,6 +44,7 @@ class LogicalModelAdmin(admin.ModelAdmin):
     """
     
     delete_selected_complete_confirmation = None
+    form = LogicalModelForm
 
     def __init__(self, *args, **kwargs):
         super(LogicalModelAdmin, self).__init__(*args, **kwargs)
