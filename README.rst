@@ -23,7 +23,7 @@ Installing django-logicaldelete
 
 ::
 
-    git clone https://github.com/lvelezsantos/django-logicaldelete.git
+    git clone https://github.com/lvelezsantos/django-logicaldelete-backup.git
 
     cd django-logicaldelete
 
@@ -39,6 +39,9 @@ Using the app is pretty simple:
 #. Inherit from `logicaldelete.models.Model` for all models that you wish to 
    share in this functionality.
 #. Create and/or Register admins for each of these models using `logicaldelete.admin.ModelAdmin`
+
+Project is forked from
+https://github.com/pinax/pinax-models
 
 
 Additional
