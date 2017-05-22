@@ -38,5 +38,9 @@ class LogicalDeletedManager(models.Manager):
         return self.get_query_set().filter(*args, **kwargs)
 
     def everything(self):
-        if self.model:
-            return LogicalDeleteQuerySet(self.model, using=self._db).all()
+        qs = self.get_query_set()
+        qs.__class__ = LogicalDeleteQuerySet
+        # for related manager
+        if hasattr(self, 'core_filters'):
+            return qs.filter(**self.core_filters)
+        return qs
