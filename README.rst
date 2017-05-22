@@ -13,6 +13,7 @@ There are two exceptions however, that I have found useful to this rule.
 #. In the admin I like to see everything with an indicator of whether or not 
    it has been deleted, with the ability to filter down to just active records,
    (or deleted for that matter).
+
 #. I still think it is a valid request when an item is fetched for by it's
    primary key value, that the object should return, even if it is marked as
    deleted.

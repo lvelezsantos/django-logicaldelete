@@ -1,8 +1,7 @@
-import datetime
-
 from django.db import models, router
 from django.db.models.deletion import Collector
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 
 from logicaldelete.deletion import LogicalDeleteCollector
 from logicaldelete import managers
@@ -17,8 +16,8 @@ class LogicalModel(models.Model):
     delete functionality in derived models.
     """
     
-    date_created = models.DateTimeField(default=datetime.datetime.now)
-    date_modified = models.DateTimeField(default=datetime.datetime.now)
+    date_created = models.DateTimeField(default=timezone.now)
+    date_modified = models.DateTimeField(default=timezone.now)
     date_removed = models.DateTimeField(null=True, blank=True)
     
     objects = managers.LogicalDeletedManager()
@@ -26,8 +25,9 @@ class LogicalModel(models.Model):
 
     def active(self):
         return self.date_removed is None
+
     active.boolean = True
-    active.short_description = 'Activo'
+    active.short_description = _('Active')
 
     def delete(self, using=None, keep_parents=False):
         using = using or router.db_for_write(self.__class__, instance=self)
@@ -67,19 +67,6 @@ class LogicalModel(models.Model):
         return collector.undelete()
 
     undelete.alters_data = True
-
-    # def save(self, force_insert=False, force_update=False, using=None,
-    #          update_fields=None):
-    #     self.date_modified = timezone.now()
-    #
-    #     if update_fields is not None:
-    #         if isinstance(update_fields, tuple):
-    #             update_fields += ('date_modified', )
-    #
-    #         elif isinstance(update_fields, list):
-    #             update_fields.append('date_modified')
-    #
-    #     super(LogicalModel, self).save(force_insert, force_update, using, update_fields)
 
     class Meta:
         abstract = True
