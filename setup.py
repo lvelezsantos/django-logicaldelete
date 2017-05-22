@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="django-logicaldelete",
-    version='2',
+    version='1',
     author="Luis Velez",
     author_email="lvelezsantos@gmail.com",
     url="https://github.com/lvelezsantos/django-logicaldelete",

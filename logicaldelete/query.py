@@ -6,13 +6,16 @@ from logicaldelete.deletion import LogicalDeleteCollector
 
 
 class LogicalDeleteQuerySet(QuerySet):
-    
+
     def delete(self):
         """
-        Mark as deleted the records in the current QuerySet.
+        Deletes the records in the current QuerySet.
         """
-        assert self.query.can_filter(),\
-        "Cannot use 'limit' or 'offset' with delete."
+        assert self.query.can_filter(), \
+            "Cannot use 'limit' or 'offset' with delete."
+
+        if self._fields is not None:
+            raise TypeError("Cannot call delete() after .values() or .values_list()")
 
         del_query = self._clone()
 
@@ -28,18 +31,24 @@ class LogicalDeleteQuerySet(QuerySet):
 
         collector = LogicalDeleteCollector(using=del_query.db)
         collector.collect(del_query)
-        collector.delete()
+        deleted, _rows_count = collector.delete()
 
         # Clear the result cache, in case this QuerySet gets reused.
         self._result_cache = None
+        return deleted, _rows_count
 
     delete.alters_data = True
+    delete.queryset_only = True
 
     def delete_complete(self):
         """
         Deletes the records in the current QuerySet.
         """
-        assert self.query.can_filter(), "Cannot use 'limit' or 'offset' with delete."
+        assert self.query.can_filter(), \
+            "Cannot use 'limit' or 'offset' with delete."
+
+        if self._fields is not None:
+            raise TypeError("Cannot call delete() after .values() or .values_list()")
 
         del_query = self._clone()
 
@@ -55,17 +64,24 @@ class LogicalDeleteQuerySet(QuerySet):
 
         collector = Collector(using=del_query.db)
         collector.collect(del_query)
-        collector.delete()
+        deleted, _rows_count = collector.delete()
 
         # Clear the result cache, in case this QuerySet gets reused.
         self._result_cache = None
+        return deleted, _rows_count
+
     delete_complete.alters_data = True
+    delete_complete.queryset_only = True
 
     def undelete(self):
         """
-        Mark as undeleted the records in the current QuerySet.
+        Deletes the records in the current QuerySet.
         """
-        assert self.query.can_filter(), "Cannot use 'limit' or 'offset' with undelete."
+        assert self.query.can_filter(), \
+            "Cannot use 'limit' or 'offset' with delete."
+
+        if self._fields is not None:
+            raise TypeError("Cannot call delete() after .values() or .values_list()")
 
         del_query = self._clone()
 
@@ -81,9 +97,11 @@ class LogicalDeleteQuerySet(QuerySet):
 
         collector = LogicalDeleteCollector(using=del_query.db)
         collector.collect(del_query)
-        collector.undelete()
+        deleted, _rows_count = collector.undelete()
 
         # Clear the result cache, in case this QuerySet gets reused.
         self._result_cache = None
+        return deleted, _rows_count
 
     undelete.alters_data = True
+    undelete.queryset_only = True
