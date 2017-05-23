@@ -1,5 +1,6 @@
 # coding=utf-8
 from django import forms
+from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 
 
@@ -18,7 +19,7 @@ class LogicalModelForm(forms.ModelForm):
 
             if self._meta.model.objects.everything().filter(**data).exclude(id=self.instance.id).exists():
                 fields_text = u', '.join(fields)
-                raise ValidationError(u'ya existe un registro con los campos: {0}. en los registros borrados. '
-                                      u'revise los registros borrados y modifique la informacion'.format(fields_text))
+                raise ValidationError(_(u'ya existe un registro con los campos: {0}. en los registros borrados. '
+                                      u'revise los registros borrados y modifique la informacion').format(fields_text))
 
         return cleaned_data
