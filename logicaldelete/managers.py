@@ -1,9 +1,10 @@
 from django.db import models
+from django.db.models.manager import BaseManager
 
 from logicaldelete.query import LogicalDeleteQuerySet
 
 
-class LogicalDeletedManager(models.Manager):
+class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     """
     A manager that serves as the default manager for `logicaldelete.models.Model`
     providing the filtering out of logically deleted objects.  In addition, it
@@ -13,9 +14,13 @@ class LogicalDeletedManager(models.Manager):
     def get_query_set(self):
 
         if self.model:
-            return LogicalDeleteQuerySet(self.model, using=self._db).filter(
+            qs = LogicalDeleteQuerySet(self.model, using=self._db).filter(
                 date_removed__isnull=True
             )
+            if hasattr(self, 'core_filters'):
+                return qs.filter(**self.core_filters)
+
+            return qs
     
     def only_deleted(self):
         if self.model:
@@ -41,6 +46,6 @@ class LogicalDeletedManager(models.Manager):
         qs = self.get_query_set()
         qs.__class__ = LogicalDeleteQuerySet
         # for related manager
-        if hasattr(self, 'core_filters'):
-            return qs.filter(**self.core_filters)
+        # if hasattr(self, 'core_filters'):
+        #     return qs.filter(**self.core_filters)
         return qs
