@@ -11,12 +11,11 @@ class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     provides named querysets for getting the deleted objects.
     """
     
-    def get_query_set(self, exclude_deleted=True):
+    def get_queryset(self):
 
         if self.model:
-            qs = LogicalDeleteQuerySet(self.model, using=self._db).all()
-            if exclude_deleted:
-                qs = qs.filter(date_removed__isnull=True)
+            qs = LogicalDeleteQuerySet(self.model, using=self._db, hints=self._hints).all()
+            qs = qs.filter(date_removed__isnull=True)
 
             if hasattr(self, 'core_filters') and self.core_filters is not None:
                 return qs.filter(**self.core_filters)
@@ -25,9 +24,11 @@ class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     
     def only_deleted(self):
         if self.model:
-            return super(LogicalDeletedManager, self).get_query_set().filter(
+            qs = super(LogicalDeletedManager, self).get_query_set().filter(
                 date_removed__isnull=False
             )
+            qs.__class__ = LogicalDeleteQuerySet
+            return qs
 
     def get(self, *args, **kwargs):
         return self.everything().get(*args, **kwargs)
@@ -41,17 +42,21 @@ class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     def filter(self, *args, **kwargs):
         if "pk" in kwargs:
             return self.everything().filter(*args, **kwargs)
-        return self.get_query_set().filter(*args, **kwargs)
+        return self.get_queryset().filter(*args, **kwargs)
 
     def all(self):
-        return self.get_query_set().all()
+        return self.get_queryset().all()
 
     def all_with_deleted(self):
         return self.everything()
 
     def everything(self):
-        qs = self.get_query_set(False)
+        # if self.model:
+        qs = super(LogicalDeletedManager, self).get_queryset().filter()
         qs.__class__ = LogicalDeleteQuerySet
+
+        if hasattr(self, 'core_filters') and self.core_filters is not None:
+            qs = qs.filter(**self.core_filters)
         # for related manager
         # if hasattr(self, 'core_filters'):
         #     return qs.filter(**self.core_filters)
