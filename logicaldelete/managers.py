@@ -10,7 +10,9 @@ class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     providing the filtering out of logically deleted objects.  In addition, it
     provides named querysets for getting the deleted objects.
     """
-    
+    def get_query_set(self):
+        return self.get_queryset()
+
     def get_queryset(self):
 
         if self.model:
