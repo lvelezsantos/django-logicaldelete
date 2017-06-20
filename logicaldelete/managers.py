@@ -26,7 +26,7 @@ class LogicalDeletedManager(BaseManager.from_queryset(LogicalDeleteQuerySet)):
     
     def only_deleted(self):
         if self.model:
-            qs = super(LogicalDeletedManager, self).get_query_set().filter(
+            qs = super(LogicalDeletedManager, self).get_queryset().filter(
                 date_removed__isnull=False
             )
             qs.__class__ = LogicalDeleteQuerySet
